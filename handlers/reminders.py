@@ -1,7 +1,7 @@
 from aiogram import Router
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from utils.database import get_all_users
-from aiogram.types import Bot
+from aiogram import Bot
 
 router = Router()
 

@@ -3,10 +3,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 from state.registration import RegistrationStates
 from utils.database import save_user_data
+from aiogram.filters import Command
 
 router = Router()
 
-@router.message(commands="start")
+@router.message(Command("start"))
 async def start_registration(message: Message, state: FSMContext):
     await message.answer("Привет! Давай начнем регистрацию. Как тебя зовут?")
     await state.set_state(RegistrationStates.enter_name)
