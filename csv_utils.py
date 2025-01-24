@@ -63,6 +63,19 @@ def update_user_points(user_id, delta_points):
 
 def load_events():
     ensure_csv_headers(EVENTS_CSV, ["event_id","name","date","place","points","description"])
+    events = {}
+    with open(EVENTS_CSV, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            eid = int(row["event_id"])
+            events[eid] = {
+                "name": row["name"],
+                "date": row["date"],
+                "place": row["place"],
+                "points": int(row["points"]),
+                "description": row["description"]
+            }
+    return events
 
 def save_event(event_id, name, date_str, place, points, description=""):
     events = load_events()
@@ -83,7 +96,7 @@ def save_event(event_id, name, date_str, place, points, description=""):
                 "date": info["date"],
                 "place": info["place"],
                 "points": info["points"],
-                "description": info.get("description","")
+                "description": info["description"]
             })
 
 def load_attendance():
