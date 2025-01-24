@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from states import AddEventStates
 from csv_utils import load_events, save_event, load_users
 from csv_utils import update_user_points
+from gigachat_integration import generate_text_gigachat
 import os
 
 router = Router()
@@ -21,8 +22,20 @@ async def cmd_addevent(message: types.Message, state: FSMContext):
 
 @router.message(AddEventStates.waiting_for_name)
 async def add_event_name(message: types.Message, state: FSMContext):
-    await state.update_data(event_name=message.text)
-    await message.answer("Введите дату в формате YYYY-MM-DD:")
+    event_name = message.text
+    await state.update_data(event_name=event_name)
+
+    # Генерируем автоописание через GigaChat
+    prompt = f"Сгенерируй короткое описание мероприятия по названию: {event_name}"
+    description = generate_text_gigachat(prompt)
+
+    # Сохраняем в data
+    await state.update_data(description=description)
+
+    await message.answer(
+        f"Сгенерированное описание:\n\n{description}\n\n"
+        "Введите дату в формате YYYY-MM-DD:"
+    )
     await state.set_state(AddEventStates.waiting_for_date)
 
 @router.message(AddEventStates.waiting_for_date)
@@ -47,12 +60,19 @@ async def add_event_points(message: types.Message, state: FSMContext):
     name = data["event_name"]
     date_str = data["event_date"]
     place = data["event_place"]
+    desc = data["description"]  # из GigaChat
 
     events = load_events()
     new_id = max(events.keys(), default=0) + 1
-    save_event(new_id, name, date_str, place, points)
 
-    await message.answer(f"Мероприятие добавлено:\nID: {new_id}\n{name} ({date_str}), {place}\nБаллы: {points}")
+    # Теперь в save_event() нужно иметь поле description (см. ниже)
+    save_event(new_id, name, date_str, place, points, description=desc)
+
+    await message.answer(
+        f"Мероприятие добавлено:\n"
+        f"ID: {new_id}\n{name} ({date_str}), {place}\n"
+        f"Баллы: {points}\n\nОписание:\n{desc}"
+    )
     await state.clear()
 
 @router.message(Command("setpoints"))

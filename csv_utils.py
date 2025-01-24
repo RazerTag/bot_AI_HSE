@@ -62,24 +62,19 @@ def update_user_points(user_id, delta_points):
         _write_users(users)
 
 def load_events():
-    events = {}
-    with open(EVENTS_CSV, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            e_id = int(row["event_id"])
-            events[e_id] = {
-                "name": row["name"],
-                "date": row["date"],
-                "place": row["place"],
-                "points": int(row["points"])
-            }
-    return events
+    ensure_csv_headers(EVENTS_CSV, ["event_id","name","date","place","points","description"])
 
-def save_event(event_id, name, date, place, points):
+def save_event(event_id, name, date_str, place, points, description=""):
     events = load_events()
-    events[event_id] = {"name": name, "date": date, "place": place, "points": points}
+    events[event_id] = {
+        "name": name,
+        "date": date_str,
+        "place": place,
+        "points": points,
+        "description": description
+    }
     with open(EVENTS_CSV, "w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["event_id","name","date","place","points"])
+        writer = csv.DictWriter(f, fieldnames=["event_id","name","date","place","points","description"])
         writer.writeheader()
         for eid, info in events.items():
             writer.writerow({
@@ -87,7 +82,8 @@ def save_event(event_id, name, date, place, points):
                 "name": info["name"],
                 "date": info["date"],
                 "place": info["place"],
-                "points": info["points"]
+                "points": info["points"],
+                "description": info.get("description","")
             })
 
 def load_attendance():
